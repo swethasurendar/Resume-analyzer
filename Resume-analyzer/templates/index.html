@@ -1,0 +1,783 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Resume Analyzer</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            padding: 20px;
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            background: white;
+            border-radius: 10px;
+            box-shadow: 0 10px 40px rgba(0, 0, 0, 0.3);
+            overflow: hidden;
+        }
+
+        .header {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 40px 20px;
+            text-align: center;
+        }
+
+        .header h1 {
+            font-size: 2.5em;
+            margin-bottom: 10px;
+        }
+
+        .header p {
+            font-size: 1.1em;
+            opacity: 0.9;
+        }
+
+        .content {
+            padding: 40px;
+        }
+
+        .upload-section {
+            background: #f8f9fa;
+            padding: 30px;
+            border-radius: 8px;
+            margin-bottom: 30px;
+            border: 2px dashed #667eea;
+        }
+
+        .upload-box {
+            text-align: center;
+            cursor: pointer;
+            padding: 20px;
+        }
+
+        .upload-box:hover {
+            background: #e8edf5;
+            border-radius: 8px;
+        }
+
+        .upload-icon {
+            font-size: 3em;
+            margin-bottom: 15px;
+        }
+
+        #fileInput {
+            display: none;
+        }
+
+        .file-label {
+            display: inline-block;
+            padding: 12px 30px;
+            background: #667eea;
+            color: white;
+            border-radius: 5px;
+            cursor: pointer;
+            font-size: 1em;
+            transition: background 0.3s;
+        }
+
+        .file-label:hover {
+            background: #764ba2;
+        }
+
+        .selected-file {
+            margin-top: 15px;
+            color: #333;
+            font-size: 0.95em;
+        }
+
+        .loading {
+            display: none;
+            text-align: center;
+            margin: 20px 0;
+        }
+
+        .spinner {
+            border: 4px solid #f3f3f3;
+            border-top: 4px solid #667eea;
+            border-radius: 50%;
+            width: 40px;
+            height: 40px;
+            animation: spin 1s linear infinite;
+            margin: 0 auto;
+        }
+
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+
+        .error {
+            background: #f8d7da;
+            color: #721c24;
+            padding: 15px;
+            border-radius: 5px;
+            margin: 15px 0;
+            display: none;
+            border-left: 4px solid #f5c6cb;
+        }
+
+        .results {
+            display: none;
+        }
+
+        .section {
+            margin-bottom: 40px;
+        }
+
+        .section-title {
+            font-size: 1.8em;
+            color: #333;
+            margin-bottom: 20px;
+            padding-bottom: 10px;
+            border-bottom: 3px solid #667eea;
+        }
+
+        .skills-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+            gap: 15px;
+            margin-bottom: 30px;
+        }
+
+        .category-group {
+            background: #f8f9fa;
+            padding: 20px;
+            border-radius: 8px;
+            border-left: 4px solid #667eea;
+        }
+
+        .category-title {
+            font-weight: 700;
+            color: #667eea;
+            margin-bottom: 10px;
+            font-size: 1em;
+        }
+
+        .skill-item {
+            background: white;
+            padding: 8px 12px;
+            border-radius: 5px;
+            font-size: 0.9em;
+            margin: 5px 0;
+            color: #333;
+            border: 1px solid #ddd;
+        }
+
+        .job-matches {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+            gap: 20px;
+        }
+
+        .job-card {
+            background: #f8f9fa;
+            border: 2px solid #e0e0e0;
+            border-radius: 8px;
+            padding: 20px;
+            cursor: pointer;
+            transition: all 0.3s;
+        }
+
+        .job-card:hover {
+            border-color: #667eea;
+            box-shadow: 0 5px 15px rgba(102, 126, 234, 0.2);
+            transform: translateY(-5px);
+        }
+
+        .job-title {
+            font-size: 1.3em;
+            font-weight: 700;
+            color: #333;
+            margin-bottom: 10px;
+        }
+
+        .match-percentage {
+            font-size: 2.5em;
+            font-weight: 700;
+            color: #667eea;
+            text-align: center;
+            margin: 15px 0;
+        }
+
+        .match-bar {
+            background: #e0e0e0;
+            height: 8px;
+            border-radius: 4px;
+            overflow: hidden;
+            margin: 15px 0;
+        }
+
+        .match-fill {
+            background: linear-gradient(90deg, #667eea 0%, #764ba2 100%);
+            height: 100%;
+            border-radius: 4px;
+            transition: width 0.3s;
+        }
+
+        .match-details {
+            font-size: 0.9em;
+            color: #666;
+            margin-top: 10px;
+        }
+
+        .detail-row {
+            display: flex;
+            justify-content: space-between;
+            margin: 5px 0;
+            padding: 5px 0;
+        }
+
+        .detail-label {
+            font-weight: 600;
+        }
+
+        .modal {
+            display: none;
+            position: fixed;
+            z-index: 1;
+            left: 0;
+            top: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0, 0, 0, 0.5);
+            overflow: auto;
+        }
+
+        .modal-content {
+            background-color: white;
+            margin: 5% auto;
+            padding: 30px;
+            border-radius: 8px;
+            width: 90%;
+            max-width: 900px;
+            max-height: 80vh;
+            overflow-y: auto;
+        }
+
+        .modal-header {
+            font-size: 2em;
+            font-weight: 700;
+            color: #333;
+            margin-bottom: 20px;
+            padding-bottom: 10px;
+            border-bottom: 3px solid #667eea;
+        }
+
+        .close {
+            color: #aaa;
+            float: right;
+            font-size: 28px;
+            font-weight: bold;
+            cursor: pointer;
+            transition: color 0.3s;
+        }
+
+        .close:hover {
+            color: #000;
+        }
+
+        .skills-list {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
+            gap: 10px;
+            margin: 15px 0;
+        }
+
+        .skill-badge {
+            background: #e8edf5;
+            border: 1px solid #667eea;
+            color: #667eea;
+            padding: 8px 12px;
+            border-radius: 5px;
+            font-size: 0.9em;
+            text-align: center;
+        }
+
+        .skill-badge.missing {
+            background: #f8d7da;
+            border-color: #f5c6cb;
+            color: #721c24;
+        }
+
+        .skill-badge.matched {
+            background: #d4edda;
+            border-color: #c3e6cb;
+            color: #155724;
+        }
+
+        .gap-section {
+            background: #fff3cd;
+            border-left: 4px solid #ffc107;
+            padding: 15px;
+            border-radius: 5px;
+            margin: 15px 0;
+        }
+
+        .gap-title {
+            font-weight: 700;
+            color: #856404;
+            margin-bottom: 10px;
+        }
+
+        .suggestion {
+            background: white;
+            border-left: 3px solid #ffc107;
+            padding: 10px;
+            margin: 10px 0;
+            border-radius: 3px;
+        }
+
+        .suggestion-skill {
+            font-weight: 700;
+            color: #333;
+        }
+
+        .suggestion-item {
+            margin: 5px 0 5px 20px;
+            color: #666;
+            font-size: 0.9em;
+        }
+
+        .summary-stats {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+            gap: 15px;
+            margin-bottom: 30px;
+        }
+
+        .stat-card {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 20px;
+            border-radius: 8px;
+            text-align: center;
+        }
+
+        .stat-number {
+            font-size: 2.5em;
+            font-weight: 700;
+            margin-bottom: 5px;
+        }
+
+        .stat-label {
+            font-size: 0.95em;
+            opacity: 0.9;
+        }
+
+        .button-group {
+            display: flex;
+            gap: 10px;
+            margin-top: 15px;
+        }
+
+        button {
+            padding: 10px 20px;
+            background: #667eea;
+            color: white;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            font-size: 1em;
+            transition: background 0.3s;
+        }
+
+        button:hover {
+            background: #764ba2;
+        }
+
+        button.secondary {
+            background: #6c757d;
+        }
+
+        button.secondary:hover {
+            background: #5a6268;
+        }
+
+        @media (max-width: 768px) {
+            .header h1 {
+                font-size: 2em;
+            }
+
+            .content {
+                padding: 20px;
+            }
+
+            .job-matches {
+                grid-template-columns: 1fr;
+            }
+
+            .skills-grid {
+                grid-template-columns: 1fr;
+            }
+
+            .modal-content {
+                width: 95%;
+                margin: 20% auto;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>📄 Resume Analyzer</h1>
+            <p>Extract skills and find the best matching job roles</p>
+        </div>
+
+        <div class="content">
+            <!-- Upload Section -->
+            <div class="upload-section">
+                <div class="upload-box" onclick="document.getElementById('fileInput').click()">
+                    <div class="upload-icon">📤</div>
+                    <p>Click to upload your resume (PDF) or drag and drop</p>
+                    <label for="fileInput" class="file-label">Choose File</label>
+                    <input type="file" id="fileInput" accept=".pdf" />
+                    <div class="selected-file" id="selectedFile"></div>
+                </div>
+            </div>
+
+            <!-- Error Message -->
+            <div class="error" id="errorMessage"></div>
+
+            <!-- Loading Spinner -->
+            <div class="loading" id="loading">
+                <div class="spinner"></div>
+                <p style="margin-top: 15px;">Analyzing resume...</p>
+            </div>
+
+            <!-- Results Section -->
+            <div class="results" id="results">
+                <!-- Skills Summary -->
+                <div class="section">
+                    <h2 class="section-title">📊 Skills Summary</h2>
+                    <div class="summary-stats" id="summaryStats"></div>
+                </div>
+
+                <!-- Extracted Skills -->
+                <div class="section">
+                    <h2 class="section-title">🛠️ Extracted Technical Skills</h2>
+                    <div class="skills-grid" id="skillsGrid"></div>
+                </div>
+
+                <!-- Best Job Matches -->
+                <div class="section">
+                    <h2 class="section-title">💼 Best Matching Job Roles</h2>
+                    <div class="job-matches" id="jobMatches"></div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal for Detailed Job Report -->
+    <div id="reportModal" class="modal">
+        <div class="modal-content">
+            <span class="close" id="closeModal">&times;</span>
+            <div id="reportContent"></div>
+        </div>
+    </div>
+
+    <script>
+        let currentResumeText = '';
+        let extractedSkills = {};
+
+        // File upload handling
+        const fileInput = document.getElementById('fileInput');
+        const selectedFile = document.getElementById('selectedFile');
+
+        fileInput.addEventListener('change', handleFileSelect);
+
+        function handleFileSelect(e) {
+            const file = e.target.files[0];
+            if (file) {
+                selectedFile.textContent = `Selected: ${file.name}`;
+                uploadResume(file);
+            }
+        }
+
+        // Drag and drop
+        const uploadBox = document.querySelector('.upload-box');
+        uploadBox.addEventListener('dragover', (e) => {
+            e.preventDefault();
+            uploadBox.style.background = '#e8edf5';
+        });
+
+        uploadBox.addEventListener('dragleave', () => {
+            uploadBox.style.background = '';
+        });
+
+        uploadBox.addEventListener('drop', (e) => {
+            e.preventDefault();
+            uploadBox.style.background = '';
+            const file = e.dataTransfer.files[0];
+            if (file && file.type === 'application/pdf') {
+                fileInput.files = e.dataTransfer.files;
+                selectedFile.textContent = `Selected: ${file.name}`;
+                uploadResume(file);
+            } else {
+                showError('Please drop a PDF file');
+            }
+        });
+
+        function uploadResume(file) {
+            const formData = new FormData();
+            formData.append('file', file);
+
+            showLoading(true);
+            clearResults();
+
+            fetch('/upload', {
+                method: 'POST',
+                body: formData
+            })
+            .then(response => response.json())
+            .then(data => {
+                showLoading(false);
+                if (data.error) {
+                    showError(data.error);
+                } else {
+                    currentResumeText = data.raw_text || '';
+                    extractedSkills = data.skills;
+                    displayResults(data);
+                }
+            })
+            .catch(error => {
+                showLoading(false);
+                showError('Error uploading file: ' + error);
+            });
+        }
+
+        function displayResults(data) {
+            // Display summary stats
+            const summaryStats = document.getElementById('summaryStats');
+            const summary = data.skills_summary;
+            summaryStats.innerHTML = `
+                <div class="stat-card">
+                    <div class="stat-number">${summary.total_skills}</div>
+                    <div class="stat-label">Total Skills</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-number">${Object.keys(summary.categories).length}</div>
+                    <div class="stat-label">Categories</div>
+                </div>
+            `;
+
+            // Display skills by category
+            const skillsGrid = document.getElementById('skillsGrid');
+            skillsGrid.innerHTML = '';
+            
+            for (const [category, skillData] of Object.entries(summary.categories)) {
+                const categoryDiv = document.createElement('div');
+                categoryDiv.className = 'category-group';
+                let skillsHtml = `<div class="category-title">${category} (${skillData.count})</div>`;
+                skillData.skills.forEach(skill => {
+                    skillsHtml += `<div class="skill-item">${skill}</div>`;
+                });
+                categoryDiv.innerHTML = skillsHtml;
+                skillsGrid.appendChild(categoryDiv);
+            }
+
+            // Display job matches
+            displayJobMatches(data.best_matches);
+
+            document.getElementById('results').style.display = 'block';
+        }
+
+        function displayJobMatches(matches) {
+            const jobMatches = document.getElementById('jobMatches');
+            jobMatches.innerHTML = '';
+
+            matches.forEach(match => {
+                const card = document.createElement('div');
+                card.className = 'job-card';
+                card.onclick = () => showDetailedReport(match.job_role);
+
+                const matchPercentage = match.overall_match_percentage;
+                card.innerHTML = `
+                    <div class="job-title">${match.job_role}</div>
+                    <div class="match-percentage">${matchPercentage}%</div>
+                    <div class="match-bar">
+                        <div class="match-fill" style="width: ${matchPercentage}%"></div>
+                    </div>
+                    <div class="match-details">
+                        <div class="detail-row">
+                            <span class="detail-label">Required Skills:</span>
+                            <span>${match.required_matched.length}/${match.required_matched.length + match.required_missing.length}</span>
+                        </div>
+                        <div class="detail-row">
+                            <span class="detail-label">Preferred Skills:</span>
+                            <span>${match.preferred_matched.length}/${match.preferred_matched.length + match.preferred_missing.length}</span>
+                        </div>
+                    </div>
+                    <p style="text-align: center; margin-top: 15px; font-size: 0.9em; color: #667eea;">Click for details →</p>
+                `;
+                jobMatches.appendChild(card);
+            });
+        }
+
+        function showDetailedReport(jobRole) {
+            const modal = document.getElementById('reportModal');
+            const reportContent = document.getElementById('reportContent');
+
+            showLoading(true);
+
+            fetch('/analyze-job', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    resume_text: currentResumeText,
+                    target_job: jobRole
+                })
+            })
+            .then(response => response.json())
+            .then(data => {
+                showLoading(false);
+                if (data.error) {
+                    showError(data.error);
+                } else {
+                    const report = data.report;
+                    renderDetailedReport(report);
+                    modal.style.display = 'block';
+                }
+            })
+            .catch(error => {
+                showLoading(false);
+                showError('Error generating report: ' + error);
+            });
+        }
+
+        function renderDetailedReport(report) {
+            const reportContent = document.getElementById('reportContent');
+            const matching = report.matching;
+            const recommendations = report.recommendations;
+
+            let html = `
+                <div class="modal-header">${report.job_role}</div>
+                <p style="color: #666; margin-bottom: 20px;">${report.job_description}</p>
+
+                <h3 style="margin-top: 20px; margin-bottom: 10px; font-size: 1.5em; color: #333;">Match Analysis</h3>
+                <div style="display: grid; grid-template-columns: repeat(3, 1fr); gap: 15px; margin-bottom: 20px;">
+                    <div style="background: #d4edda; padding: 15px; border-radius: 5px; text-align: center;">
+                        <div style="font-size: 2em; font-weight: 700; color: #155724;">${matching.overall_match_percentage}%</div>
+                        <div style="color: #155724;">Overall Match</div>
+                    </div>
+                    <div style="background: #cfe2ff; padding: 15px; border-radius: 5px; text-align: center;">
+                        <div style="font-size: 2em; font-weight: 700; color: #084298;">${matching.required_match_percentage}%</div>
+                        <div style="color: #084298;">Required Skills</div>
+                    </div>
+                    <div style="background: #e7d4f5; padding: 15px; border-radius: 5px; text-align: center;">
+                        <div style="font-size: 2em; font-weight: 700; color: #664e88;">${matching.preferred_match_percentage}%</div>
+                        <div style="color: #664e88;">Preferred Skills</div>
+                    </div>
+                </div>
+
+                <h4 style="margin-top: 20px; margin-bottom: 10px; font-size: 1.2em; color: #333;">✓ Matched Skills</h4>
+                <div class="skills-list">
+            `;
+
+            matching.required_matched.forEach(skill => {
+                html += `<div class="skill-badge matched">${skill}</div>`;
+            });
+
+            html += `</div>
+                <h4 style="margin-top: 20px; margin-bottom: 10px; font-size: 1.2em; color: #333;">⚠️ Skills Gap</h4>
+            `;
+
+            if (recommendations.critical_gaps.skills.length > 0) {
+                html += `<div class="gap-section">
+                    <div class="gap-title">Critical Gaps (Required Skills Missing)</div>
+                `;
+                recommendations.critical_gaps.skills.forEach(skill => {
+                    html += `<div style="margin: 10px 0; padding: 10px; background: white; border-radius: 5px;">
+                        <div class="suggestion-skill">❌ ${skill}</div>
+                    </div>`;
+                });
+                html += `</div>`;
+            } else {
+                html += `<div style="background: #d4edda; padding: 15px; border-radius: 5px; color: #155724;">
+                    ✓ You have all required skills!
+                </div>`;
+            }
+
+            if (recommendations.nice_to_have.skills.length > 0) {
+                html += `<div class="gap-section" style="border-left-color: #17a2b8; background: #d1ecf1;">
+                    <div class="gap-title" style="color: #0c5460;">Nice-to-Have Skills Missing</div>
+                    <div style="display: grid; grid-template-columns: repeat(auto-fill, minmax(150px, 1fr)); gap: 10px;">
+                `;
+                recommendations.nice_to_have.skills.forEach(skill => {
+                    html += `<div class="skill-badge" style="background: white; border-color: #17a2b8; color: #0c5460;">◇ ${skill}</div>`;
+                });
+                html += `</div></div>`;
+            }
+
+            if (recommendations.strengths.length > 0) {
+                html += `<h4 style="margin-top: 20px; margin-bottom: 10px; font-size: 1.2em; color: #155724;">💪 Your Strengths</h4>
+                    <div class="skills-list">
+                `;
+                recommendations.strengths.forEach(skill => {
+                    html += `<div class="skill-badge matched">★ ${skill}</div>`;
+                });
+                html += `</div>`;
+            }
+
+            if (recommendations.bonus_skills.length > 0) {
+                html += `<h4 style="margin-top: 20px; margin-bottom: 10px; font-size: 1.2em; color: #667eea;">🎁 Bonus Skills</h4>
+                    <div class="skills-list">
+                `;
+                recommendations.bonus_skills.slice(0, 5).forEach(skill => {
+                    html += `<div class="skill-badge" style="background: #fff3cd; border-color: #ffc107;">+ ${skill}</div>`;
+                });
+                html += `</div>`;
+            }
+
+            html += `<div class="button-group" style="margin-top: 30px;">
+                <button onclick="document.getElementById('reportModal').style.display='none'; this.parentElement.style.display='none';">Close Report</button>
+            </div>`;
+
+            document.getElementById('reportContent').innerHTML = html;
+        }
+
+        function showLoading(show) {
+            document.getElementById('loading').style.display = show ? 'block' : 'none';
+        }
+
+        function showError(message) {
+            const errorDiv = document.getElementById('errorMessage');
+            errorDiv.textContent = message;
+            errorDiv.style.display = 'block';
+            setTimeout(() => {
+                errorDiv.style.display = 'none';
+            }, 5000);
+        }
+
+        function clearResults() {
+            document.getElementById('results').style.display = 'none';
+            document.getElementById('errorMessage').style.display = 'none';
+        }
+
+        // Modal close button
+        document.getElementById('closeModal').addEventListener('click', () => {
+            document.getElementById('reportModal').style.display = 'none';
+        });
+
+        // Close modal when clicking outside
+        window.addEventListener('click', (event) => {
+            const modal = document.getElementById('reportModal');
+            if (event.target === modal) {
+                modal.style.display = 'none';
+            }
+        });
+    </script>
+</body>
+</html>
